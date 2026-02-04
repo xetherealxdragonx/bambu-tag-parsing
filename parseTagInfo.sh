@@ -120,15 +120,41 @@ do
   echo "Color Format: $colorFormat"
   echo -e "RGBA: $rgba\n"
 
+  # Moving to Proper Folder
   echo "Moving to proper folder..."
-  materialType=$(echo "$detailedFilamentType" | cut -c1-3)
   filePrefix=$(echo "${dumpJSONFile##*/}" | cut -c1-14)
-  if ! [ -d "$outputDirectory/$materialType" ]; then
-    echo "Making Directory..."
-    mkdir "$outputDirectory/$materialType"
+
+  # Parsing CSV Filament Data for Tag
+  IFS=','
+  read -r -a filamentCSVData <<< $(./lookupTag.sh "$tagUID")
+  unset IFS
+
+  # Checking Filament Type Directory Exists
+  if ! [ -d "$outputDirectory/${filamentCSVData[0]}" ]; then
+    echo "Making Filament Type Directory '${filamentCSVData[0]}'..."
+    mkdir "$outputDirectory/${filamentCSVData[0]}"
   fi
-  echo "Moving '$filePrefix' to '$outputDirectory/$materialType/'"
-  mv $outputDirectory/$filePrefix* "$outputDirectory/$materialType/"
+
+  # Checking Filament Variant Directory Exists
+  if ! [ -d "$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}" ]; then
+    echo "Making Filament Type Directory '${filamentCSVData[1]}'..."
+    mkdir "$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}"
+  fi
+
+  # Checking Filament Color Directory Exists
+  if ! [ -d "$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}/${filamentCSVData[2]}" ]; then
+    echo "Making Filament Type Directory '${filamentCSVData[2]}'..."
+    mkdir "$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}/${filamentCSVData[2]}"
+  fi
+
+  # Checking UID Directory Exists
+  if ! [ -d "$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}/${filamentCSVData[2]}/$tagUID" ]; then
+    echo "Making Filament Type Directory '$tagUID'..."
+    mkdir "$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}/${filamentCSVData[2]}/$tagUID"
+  fi
+
+  echo "Moving '$filePrefix' to '$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}/${filamentCSVData[2]}/$tagUID'"
+  mv $outputDirectory/$filePrefix* "$outputDirectory/${filamentCSVData[0]}/${filamentCSVData[1]}/${filamentCSVData[2]}/$tagUID/"
   echo -e "Done!\n"
 
   echo -e "Done Processing!\n"
