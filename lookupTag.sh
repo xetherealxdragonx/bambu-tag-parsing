@@ -1,10 +1,15 @@
 #!/bin/bash
+csvFile="$1"
 
-csvFile="/home/dragon/FilamentList.csv"
+# Ensuring that Filament Data CSV is available
+if [ ! -f "$csvFile" ]; then
+  echo "Filament CSV Data is not valid. Exiting."
+  exit 1
+fi
 
-value=$(csvsql --query "SELECT * FROM FilamentList WHERE UID = '$1' OR UID2 = '$1'" "$csvFile" | sed -n '2p')
+value=$(csvsql --query "SELECT * FROM FilamentList WHERE UID = '$2' OR UID2 = '$2'" "$csvFile" | sed -n '2p')
 if [[ -n $value ]]; then
   echo $value
 else
-  echo "UID '$1' not found"
+  echo "UID '$2' not found"
 fi
