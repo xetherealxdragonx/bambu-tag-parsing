@@ -1,5 +1,7 @@
 #!/bin/bash
 
+declare -a dumpJSONFiles
+
 # Functions
 function hexToString() {
   echo $1 | fold -w2 | grep -v '00' | tr -d '\n' | xxd -r -p
@@ -14,13 +16,16 @@ function hexToFloat() {
 }
 
 # Parse Args
-while getopts ":b:l:o" opt; do
-  case $opt in
+while getopts 'b:l:o:t:' flag; do
+  case $flag in
     b)
-      binRootDirectory="$OPTARG"
+      binRootDirectory="${OPTARG}"
       ;;
     l)
-      rfidLibraryRoot="$OPTARG"
+      rfidLibraryRoot="${OPTARG}"
+      ;;
+    t)
+      dumpJSONFiles=( "${OPTARG}" )
       ;;
     \?)
       echo "Invalid option -$OPTARG" >&2
@@ -40,8 +45,7 @@ if [[ ! -v "$binRootDirectory" ]]; then
     binRootDirectory="$1"
   fi
 fi
-
-echo "Bin Directory: $binRootDirectory"
+#echo "Bin Directory: $binRootDirectory"
 
 # Setting root for RFID Library
 if [[ ! -v "$rfidLibraryRoot" ]]; then
@@ -51,19 +55,19 @@ if [[ ! -v "$rfidLibraryRoot" ]]; then
     rfidLibraryRoot="$2"
   fi
 fi
+#echo "Library Root: $rfidLibraryRoot"
 
-echo "Library Root: $rfidLibraryRoot"
+if [ ! -n "$dumpJSONFiles" ]; then
+  # Set files to Process
+  if [ -d $binRootDirectory ]; then
+    # Gather Dump JSON files
+    mapfile -d '' dumpJSONFiles < <(find $binRootDirectory -type f -name "hf-mf-*-dump.json" -print0)
 
-# Set files to Process
-declare -a dumpJSONFiles
-if [ -d $binRootDirectory ]; then
-  # Gather Dump JSON files
-  mapfile -d '' dumpJSONFiles < <(find $binRootDirectory -type f -name "hf-mf-*-dump.json" -print0)
-
-  # Check that there are files to process
-  if (( ("${#dumpJSONFiles}") <= 0 )); then
-    echo "No dump files to process. Exiting."
-    exit 0
+    # Check that there are files to process
+    if (( ("${#dumpJSONFiles}") <= 0 )); then
+      echo "No dump files to process. Exiting."
+      exit 0
+    fi
   fi
 fi
 echo -e "Processing ${#dumpJSONFiles[@]} file(s)\n"
