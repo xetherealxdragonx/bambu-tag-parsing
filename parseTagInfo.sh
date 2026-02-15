@@ -56,18 +56,17 @@ echo "Library Root: $rfidLibraryRoot"
 
 # Set files to Process
 declare -a dumpJSONFiles
-if [[ -n "$3" ]]; then
-  dumpJSONFiles=("$3")
-else
-  # Gather Dump JSON Files
-  set -vx
-  find "$binRootDirectory" -maxdepth 1 -type f -name "hf-mf-*-dump.json" | while IFS= read -r line; do
-    echo "File: $line"
-    dumpJSONFiles["${#dumpJSONFiles[@]}"]="$line"
-  done
+if [ -d $binRootDirectory ]; then
+  # Gather Dump JSON files
+  mapfile -d '' dumpJSONFiles < <(find $binRootDirectory -type f -name "hf-mf-*-dump.json" -print0)
+
+  # Check that there are files to process
+  if (( ("${#dumpJSONFiles}") <= 0 )); then
+    echo "No dump files to process. Exiting."
+    exit 0
+  fi
 fi
-echo "Processing file(s):"
-echo "${dumpJSONFiles[@]}"
+echo -e "Processing ${#dumpJSONFiles[@]} file(s)\n"
 
 for dumpJSONFile in "${dumpJSONFiles[@]}"; do
   echo "================================================================================="
@@ -164,7 +163,6 @@ for dumpJSONFile in "${dumpJSONFiles[@]}"; do
   echo "Format Identifier: $formatIdentifier"
   echo "Color Format: $colorFormat"
   echo -e "RGBA: $rgba\n"
-  exit 0
 done
 
 echo -e "Done Processing!"
